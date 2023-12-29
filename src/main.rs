@@ -1,14 +1,13 @@
 use askama::Template;
-use serde::Deserialize;
 use axum::{
     extract::State,
     http::StatusCode,
     response::{Html, IntoResponse, Response},
     routing::{get, post},
-    Form,
-    Router,
+    Form, Router,
 };
-use std::sync::{Mutex, Arc};
+use serde::Deserialize;
+use std::sync::{Arc, Mutex};
 use tower_http::services::ServeDir;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -35,7 +34,8 @@ struct TodoRequest {
 struct HtmlTemplate<T>(T);
 
 impl<T> IntoResponse for HtmlTemplate<T>
-where T: Template,
+where
+    T: Template,
 {
     fn into_response(self) -> Response {
         match self.0.render() {
@@ -71,7 +71,9 @@ async fn main() -> anyhow::Result<()> {
 
     let assets_path = std::env::current_dir().unwrap();
     let port = 8000_u16;
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
+        .await
+        .unwrap();
 
     let api_router = Router::new()
         .route("/hello", get(hello_from_the_server))
@@ -116,7 +118,7 @@ async fn add_todo(
     let mut lock = state.todos.lock().unwrap();
     lock.push(todo.todo);
     let template = TodoList {
-        todos: lock.clone()
+        todos: lock.clone(),
     };
     HtmlTemplate(template)
 }
