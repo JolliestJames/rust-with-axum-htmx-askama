@@ -12,4 +12,3 @@ cargo run
 ```
 
 Open up [localhost:8000] and enjoy Axum/htmx/Askama
-
