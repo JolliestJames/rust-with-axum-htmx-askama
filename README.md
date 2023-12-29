@@ -11,4 +11,4 @@ pnpm dlx tailwindcss -i styles/tailwind.css -o assets/main.css --watch
 cargo run
 ```
 
-Open up [localhost:8000] and enjoy Axum/htmx/Askama
+Open up [localhost:8000](localhost:8000) and enjoy Axum/htmx/Askama
