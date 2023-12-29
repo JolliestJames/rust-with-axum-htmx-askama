@@ -9,14 +9,23 @@ use tower_http::services::ServeDir;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+#[derive(Template)]
+#[template(path = "hello.html")]
+struct HelloTemplate;
+
+#[derive(Template)]
+#[template(path = "another-page.html")]
+struct AnotherPageTemplate;
+
 async fn hello() -> impl IntoResponse {
     let template = HelloTemplate {};
     HtmlTemplate(template)
 }
 
-#[derive(Template)]
-#[template(path = "hello.html")]
-struct HelloTemplate;
+async fn another_page() -> impl IntoResponse {
+    let template = AnotherPageTemplate {};
+    HtmlTemplate(template)
+}
 
 struct HtmlTemplate<T>(T);
 
@@ -52,6 +61,7 @@ async fn main() -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await.unwrap();
     let router = Router::new()
         .route("/", get(hello))
+        .route("/another-page", get(another_page))
         .nest_service(
             "/assets",
             ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())),
