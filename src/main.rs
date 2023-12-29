@@ -1,10 +1,14 @@
 use askama::Template;
+use serde::Deserialize;
 use axum::{
+    extract::State,
     http::StatusCode,
     response::{Html, IntoResponse, Response},
-    routing::get,
+    routing::{get, post},
+    Form,
     Router,
 };
+use std::sync::{Mutex, Arc};
 use tower_http::services::ServeDir;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -16,6 +20,17 @@ struct HelloTemplate;
 #[derive(Template)]
 #[template(path = "another-page.html")]
 struct AnotherPageTemplate;
+
+#[derive(Template)]
+#[template(path = "todo-list.html")]
+struct TodoList {
+    todos: Vec<String>,
+}
+
+#[derive(Deserialize)]
+struct TodoRequest {
+    todo: String,
+}
 
 struct HtmlTemplate<T>(T);
 
@@ -34,6 +49,10 @@ where T: Template,
     }
 }
 
+struct AppState {
+    todos: Mutex<Vec<String>>,
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::registry()
@@ -46,11 +65,18 @@ async fn main() -> anyhow::Result<()> {
 
     info!("initializing router");
 
+    let app_state = Arc::new(AppState {
+        todos: Mutex::new(vec![]),
+    });
+
     let assets_path = std::env::current_dir().unwrap();
     let port = 8000_u16;
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await.unwrap();
 
-    let api_router = Router::new().route("/hello", get(hello_from_the_server));
+    let api_router = Router::new()
+        .route("/hello", get(hello_from_the_server))
+        .route("/todos", post(add_todo))
+        .with_state(app_state);
     let router = Router::new()
         .nest("/api", api_router)
         .route("/", get(hello))
@@ -83,3 +109,14 @@ async fn hello_from_the_server() -> &'static str {
     "Hello!"
 }
 
+async fn add_todo(
+    State(state): State<Arc<AppState>>,
+    Form(todo): Form<TodoRequest>,
+) -> impl IntoResponse {
+    let mut lock = state.todos.lock().unwrap();
+    lock.push(todo.todo);
+    let template = TodoList {
+        todos: lock.clone()
+    };
+    HtmlTemplate(template)
+}
