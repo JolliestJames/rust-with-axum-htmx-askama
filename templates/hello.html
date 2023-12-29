@@ -9,5 +9,13 @@
     class="text-indigo-500 underline hover:text-indigo-300"
     >Another page</a
   >
+  <button
+    type="button"
+    hx-get="/api/hello"
+    hx-swap="innerHtml"
+    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+  >
+    Say hello
+  </button>
 </div>
 {% endblock %}

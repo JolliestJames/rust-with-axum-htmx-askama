@@ -17,16 +17,6 @@ struct HelloTemplate;
 #[template(path = "another-page.html")]
 struct AnotherPageTemplate;
 
-async fn hello() -> impl IntoResponse {
-    let template = HelloTemplate {};
-    HtmlTemplate(template)
-}
-
-async fn another_page() -> impl IntoResponse {
-    let template = AnotherPageTemplate {};
-    HtmlTemplate(template)
-}
-
 struct HtmlTemplate<T>(T);
 
 impl<T> IntoResponse for HtmlTemplate<T>
@@ -59,7 +49,10 @@ async fn main() -> anyhow::Result<()> {
     let assets_path = std::env::current_dir().unwrap();
     let port = 8000_u16;
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await.unwrap();
+
+    let api_router = Router::new().route("/hello", get(hello_from_the_server));
     let router = Router::new()
+        .nest("/api", api_router)
         .route("/", get(hello))
         .route("/another-page", get(another_page))
         .nest_service(
@@ -75,3 +68,18 @@ async fn main() -> anyhow::Result<()> {
 
     Ok(())
 }
+
+async fn hello() -> impl IntoResponse {
+    let template = HelloTemplate {};
+    HtmlTemplate(template)
+}
+
+async fn another_page() -> impl IntoResponse {
+    let template = AnotherPageTemplate {};
+    HtmlTemplate(template)
+}
+
+async fn hello_from_the_server() -> &'static str {
+    "Hello!"
+}
+
